@@ -1,32 +1,33 @@
 const express = require('express');
-const http = require('http');
-const socketIo = require('socket.io');
-
-// Initialize Express app and create a HTTP server
 const app = express();
+const http = require('http');
+const cors = require('cors');
+const { Server } = require('socket.io');
+
 const server = http.createServer(app);
+const io = new Server(server, {
+    cors: {
+        origin: "http://localhost:8080",
+        methods: ["GET", "POST"]
+    }
+});
 
-// Initialize Socket.IO and bind it to the HTTP server
-const io = socketIo(server);
+app.use(cors()); // Enable CORS for all routes
 
-// Handle incoming socket connections
 io.on('connection', (socket) => {
-  console.log('a user connected');
+  console.log('A user connected');
 
-  // Handle incoming chat messages
-  socket.on('chat message', (msg) => {
-    console.log('message: ' + msg);
-    io.emit('chat message', msg);
+  socket.on('disconnect', () => {
+    console.log('User disconnected');
   });
 
-  // Handle disconnection
-  socket.on('disconnect', () => {
-    console.log('user disconnected');
+  socket.on('chat message', (msg) => {
+    console.log('message: ' + msg);
+    io.emit('chat message', msg); // Broadcast message to everyone
   });
 });
 
-// Start the server
-const port = process.env.PORT || 3000; 
-server.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
