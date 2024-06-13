@@ -12,29 +12,32 @@ const io = new Server(server, {
     }
 });
 
-let chatHistory = []; 
-let onlineUsers = new Map(); 
+let chatHistory = [];
+let onlineUsers = new Map();
 
-app.use(cors()); 
+app.use(cors());
 
 io.on('connection', (socket) => {
     console.log('A user connected');
 
-    // Add user to online users map with a default name
-    onlineUsers.set(socket.id, { id: socket.id, name: socket.name });
+    // Listen for user name
+    socket.on('set username', (userName) => {
+        const user = { id: socket.id, name: userName };
+        onlineUsers.set(socket.id, user);
+
+        // Emit join message to all clients
+        io.emit('chat message', {
+            name: 'System',
+            text: `${user.name} joined the chat`,
+            userId: 0
+        });
+
+        // Emit updated online users list to all clients
+        io.emit('online users', Array.from(onlineUsers.values()));
+    });
 
     // Emit chat history to the new client
     socket.emit('chat history', chatHistory);
-
-    // Emit join message to all clients
-    io.emit('chat message', {
-        name: 'System',
-        text: `${onlineUsers.get(socket.id).name} joined the chat`,
-        userId: 0
-    });
-
-    // Emit updated online users list to all clients
-    io.emit('online users', Array.from(onlineUsers.values()));
 
     // Listen for typing event
     socket.on('typing', (isTyping) => {
@@ -42,20 +45,23 @@ io.on('connection', (socket) => {
     });
 
     socket.on('disconnect', () => {
-        console.log('User disconnected');
+        const user = onlineUsers.get(socket.id);
+        if (user) {
+            console.log(`${user.name} disconnected`);
 
-        // Emit leave message to all clients
-        io.emit('chat message', {
-            name: 'System',
-            text: `${onlineUsers.get(socket.id).name} left the chat`,
-            userId: 0
-        });
+            // Emit leave message to all clients
+            io.emit('chat message', {
+                name: 'System',
+                text: `${user.name} left the chat`,
+                userId: 0
+            });
 
-        // Remove user from online users map
-        onlineUsers.delete(socket.id);
+            // Remove user from online users map
+            onlineUsers.delete(socket.id);
 
-        // Emit updated online users list to all clients
-        io.emit('online users', Array.from(onlineUsers.values()));
+            // Emit updated online users list to all clients
+            io.emit('online users', Array.from(onlineUsers.values()));
+        }
     });
 
     socket.on('chat message', (msg) => {
