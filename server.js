@@ -12,16 +12,16 @@ const io = new Server(server, {
     }
 });
 
-let chatHistory = []; // Array to store chat messages
-let onlineUsers = new Map(); // Map to store online users and their usernames
+let chatHistory = []; 
+let onlineUsers = new Map(); 
 
-app.use(cors()); // Enable CORS for all routes
+app.use(cors()); 
 
 io.on('connection', (socket) => {
     console.log('A user connected');
 
-    // Add user to online users map with a default username
-    onlineUsers.set(socket.id, { id: socket.id, username: 'User' + socket.id.slice(0, 5) });
+    // Add user to online users map with a default name
+    onlineUsers.set(socket.id, { id: socket.id, name: 'User' + socket.id.slice(0, 5) });
 
     // Emit chat history to the new client
     socket.emit('chat history', chatHistory);
@@ -29,7 +29,7 @@ io.on('connection', (socket) => {
     // Emit join message to all clients
     io.emit('chat message', {
         user: 'System',
-        message: `${onlineUsers.get(socket.id).username} joined the chat`
+        message: `${onlineUsers.get(socket.id).name} joined the chat`
     });
 
     // Emit updated online users list to all clients
@@ -46,7 +46,7 @@ io.on('connection', (socket) => {
         // Emit leave message to all clients
         io.emit('chat message', {
             user: 'System',
-            message: `${onlineUsers.get(socket.id).username} left the chat`
+            message: `${onlineUsers.get(socket.id).name} left the chat`
         });
 
         // Remove user from online users map
@@ -60,7 +60,7 @@ io.on('connection', (socket) => {
         console.log('message: ' + msg.text);
         // Store message in chat history
         chatHistory.push(msg);
-        io.emit('chat message', msg); // Broadcast message to everyone
+        io.emit('chat message', msg);
     });
 });
 
