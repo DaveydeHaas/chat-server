@@ -21,15 +21,16 @@ io.on('connection', (socket) => {
     console.log('A user connected');
 
     // Add user to online users map with a default name
-    onlineUsers.set(socket.id, { id: socket.id, name: 'User' + socket.id.slice(0, 5) });
+    onlineUsers.set(socket.id, { id: socket.id, name: socket.name });
 
     // Emit chat history to the new client
     socket.emit('chat history', chatHistory);
 
     // Emit join message to all clients
     io.emit('chat message', {
-        user: 'System',
-        message: `${onlineUsers.get(socket.id).name} joined the chat`
+        name: 'System',
+        text: `${onlineUsers.get(socket.id).name} joined the chat`,
+        userId: 0
     });
 
     // Emit updated online users list to all clients
@@ -45,8 +46,9 @@ io.on('connection', (socket) => {
 
         // Emit leave message to all clients
         io.emit('chat message', {
-            user: 'System',
-            message: `${onlineUsers.get(socket.id).name} left the chat`
+            name: 'System',
+            text: `${onlineUsers.get(socket.id).name} left the chat`,
+            userId: 0
         });
 
         // Remove user from online users map
